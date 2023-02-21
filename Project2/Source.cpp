@@ -1,4 +1,4 @@
-#include <iostream>
+﻿#include <iostream>
 #include <vector>
 #include <cstring>
 #include <string>
@@ -11,7 +11,7 @@ class Field
 {
 public:
 
-	Field(int f_length = 139, int f_width = 58)
+	Field(int f_length = 138, int f_width = 58)
 	{
 		this->era = 0, this->f_length = f_length, this->f_width = f_width;
 		vector<vector<char>> vec(f_width, vector<char>(f_length, ' '));
@@ -48,13 +48,13 @@ public:
 		{
 			for (int j = 0; j < this->f_length; j++)
 			{
-				if (mfind(RS, check_neighbours(i, j)) and field[i][j] == 'O')
+				if (mfind(RS, check_neighbours(i, j)) and field[i][j] == (char)219)
 				{
-					field_new[i][j] = 'O';
+					field_new[i][j] = (char)219;
 				}
 				else if (mfind(RB, check_neighbours(i, j)) and field[i][j] == ' ')
 				{
-					field_new[i][j] = 'O';
+					field_new[i][j] = (char)219;
 				}
 				else
 				{
@@ -74,7 +74,7 @@ public:
 			{
 				if (d == 0 and f == 0)
 					continue;
-				if (this->field[((i + d + f_width) % f_width)][((j + f + f_length) % f_length)] == 'O')
+				if (this->field[((i + d + f_width) % f_width)][((j + f + f_length) % f_length)] == (char)219)
 					N++;
 			}
 		}
@@ -104,13 +104,12 @@ private:
 	vector<int> RS;
 };
 
-
 class Game_of_Life
 {
 public:
 	Game_of_Life()
 	{
-		
+
 	};
 
 	~Game_of_Life()
@@ -118,10 +117,26 @@ public:
 
 	};
 
-	void start()
+	void start(int mode = 0)
 	{
 		int len_code = 0;
 		string code = "pause";
+		switch (mode)
+		{
+		case 0:
+		{
+			for (int i = 0; i < this->field.f_width; i++)
+			{
+				this->field.field[i][0] = char(219);
+				this->field.field[i][field.f_length - 1] = char(219);
+			}
+			for (int i = 0; i < this->field.f_length; i++)
+			{
+				this->field.field[0][i] = char(219);
+				this->field.field[field.f_width - 1][i] = char(219);
+			}
+		}
+		}
 		print_field(this->field, len_code);
 		while (handler(this->field, code, len_code))
 		{
@@ -183,11 +198,12 @@ private:
 			int j = p.x * 1920 / 1535 / Cx;
 			if (GetAsyncKeyState(VK_RBUTTON))
 			{
-				if (game.f_width > i and i >= 0 and game.f_length > j and j >= 0)
-				{
-					game.field[i][j] = 'O';
-				}
-				if (GetAsyncKeyState(VK_LCONTROL) and game.f_width > i and i >= 0 and game.f_length > j and j >= 0)
+				if (not(game.f_width > i and i >= 0 and game.f_length > j and j >= 0))
+					return true;
+
+				game.field[i][j] = char(219);
+
+				if (GetAsyncKeyState(VK_LCONTROL))
 				{
 					game.field[i][j] = ' ';
 				}
@@ -196,12 +212,21 @@ private:
 				SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), { SHORT(0), SHORT(game.f_width + 1) });
 			}
 		}
+		if (code.compare("step") == 0)
+		{
+			game.step_field();
+			print_field(game, len_code);
+			Sleep(10);
+			code = "pause";
+			len_code = code.size();
+		}
 		return true;
 	}
 
 	int Cy = 16;
 	int Cx = 12;
 };
+
 
 int main()
 {
