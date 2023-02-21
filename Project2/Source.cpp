@@ -39,6 +39,8 @@ public:
 	~Field()
 	{
 		field.clear();
+		RB.clear();
+		RS.clear();
 	};
 
 	void step_field()
@@ -97,88 +99,114 @@ public:
 
 	vector<vector<char>> field;
 	int f_length, f_width;
+
 private:
 	long long era;
 	vector<int> RB;
 	vector<int> RS;
 };
 
-void print_field(Field game, int len_code)
-{
-	string res = "";
-	for (int i = 0; i < game.f_width; i++)
-	{
-		for (int j = 0; j < game.f_length; j++)
-		{
-			res += game.field[i][j];
-		}
-		res += "\n";
-	}
-	const char* str = res.c_str();
-	SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), { SHORT(0), SHORT(0) });
-	cout << str << endl;
-}
 
-void clear_command(Field game, int &len_code)
+class Game_of_Life
 {
-	SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), { SHORT(0), SHORT(game.f_width + 1) });
-	cout << string(len_code, ' ') << endl;
-	len_code = 0;
-	SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), { SHORT(0), SHORT(game.f_width + 1) });
-}
+public:
+	Game_of_Life()
+	{
+		
+	};
 
-int handler(Field &game, string &code, int &len_code)
-{
-	if (code.compare("quit") == 0)
+	~Game_of_Life()
 	{
-		return false;
-	}
-	if (code.compare("start") == 0)
+
+	};
+
+	void start()
 	{
-		print_field(game, len_code);
-		Sleep(10);
-		game.step_field();
-	}
-	if (code.compare("pause") == 0)
-	{
-		HWND hwnd = GetConsoleWindow();
-		POINT p;
-		GetCursorPos(&p);
-		ScreenToClient(hwnd, &p);
-		int i = p.y * 1080 / 863 / Cy;
-		int j = p.x * 1920 / 1535 / Cx;
-		if (GetAsyncKeyState(VK_RBUTTON))
+		int len_code = 0;
+		string code = "pause";
+		print_field(this->field, len_code);
+		while (handler(this->field, code, len_code))
 		{
-			if (game.f_width > i and i >= 0 and game.f_length > j and j >= 0)
+			if (_kbhit())
 			{
-				game.field[i][j] = 'O';
+				getline(cin, code);
+				len_code = code.size();
+				clear_command(this->field, len_code);
 			}
-			if (GetAsyncKeyState(VK_LCONTROL) and game.f_width > i and i >= 0 and game.f_length > j and j >= 0)
-			{
-				game.field[i][j] = ' ';
-			}
-			SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), { SHORT(j), SHORT(i) });
-			cout << game.field[i][j];
-			SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), { SHORT(0), SHORT(game.f_width + 1) });
 		}
 	}
-	return true;
-}
+
+private:
+	Field field;
+
+	void print_field(Field game, int len_code)
+	{
+		string res = "";
+		for (int i = 0; i < game.f_width; i++)
+		{
+			for (int j = 0; j < game.f_length; j++)
+			{
+				res += game.field[i][j];
+			}
+			res += "\n";
+		}
+		const char* str = res.c_str();
+		SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), { SHORT(0), SHORT(0) });
+		cout << str << endl;
+	}
+
+	void clear_command(Field game, int& len_code)
+	{
+		SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), { SHORT(0), SHORT(game.f_width + 1) });
+		cout << string(len_code, ' ') << endl;
+		len_code = 0;
+		SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), { SHORT(0), SHORT(game.f_width + 1) });
+	}
+
+	int handler(Field& game, string& code, int& len_code)
+	{
+		if (code.compare("quit") == 0)
+		{
+			return false;
+		}
+		if (code.compare("start") == 0)
+		{
+			print_field(game, len_code);
+			Sleep(10);
+			game.step_field();
+		}
+		if (code.compare("pause") == 0)
+		{
+			HWND hwnd = GetConsoleWindow();
+			POINT p;
+			GetCursorPos(&p);
+			ScreenToClient(hwnd, &p);
+			int i = p.y * 1080 / 863 / Cy;
+			int j = p.x * 1920 / 1535 / Cx;
+			if (GetAsyncKeyState(VK_RBUTTON))
+			{
+				if (game.f_width > i and i >= 0 and game.f_length > j and j >= 0)
+				{
+					game.field[i][j] = 'O';
+				}
+				if (GetAsyncKeyState(VK_LCONTROL) and game.f_width > i and i >= 0 and game.f_length > j and j >= 0)
+				{
+					game.field[i][j] = ' ';
+				}
+				SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), { SHORT(j), SHORT(i) });
+				cout << game.field[i][j];
+				SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), { SHORT(0), SHORT(game.f_width + 1) });
+			}
+		}
+		return true;
+	}
+
+};
 
 int main()
 {
-	Field game;
-	int len_code = 0;
-	string code = "pause";
-	print_field(game, len_code);
-	while (handler(game, code, len_code))
-	{
-		if (_kbhit())
-		{
-			getline(cin, code);
-			len_code = code.size();
-			clear_command(game, len_code);
-		}
-	}
+	Game_of_Life game;
+	game.start();
+
 	return 0;
 }
