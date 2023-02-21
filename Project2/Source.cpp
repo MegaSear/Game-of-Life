@@ -6,8 +6,6 @@
 #include <conio.h>
 
 using namespace std;
-int Cy = 16;
-int Cx = 12;
 
 class Field
 {
@@ -201,6 +199,8 @@ private:
 		return true;
 	}
 
+	int Cy = 16;
+	int Cx = 12;
 };
 
 int main()
