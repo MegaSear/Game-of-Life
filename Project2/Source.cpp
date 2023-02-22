@@ -4,6 +4,8 @@
 #include <string>
 #include <windows.h>
 #include <conio.h>
+#include <fstream>
+#include <sstream>
 
 using namespace std;
 
@@ -98,6 +100,23 @@ public:
 	vector<vector<char>> field;
 	int f_length, f_width;
 
+	Field ReadPath(string path)
+	{
+		string line;
+		ifstream in(path);
+		Field A;
+		if (in.is_open())
+		{
+			while (getline(in, line))
+			{
+				cout << line << endl;
+			}
+		}
+		in.close();
+
+		return A;
+	}
+
 private:
 	long long era;
 	vector<int> RB;
@@ -117,26 +136,10 @@ public:
 
 	};
 
-	void start(int mode = 0)
+	void start()
 	{
 		int len_code = 0;
 		string code = "pause";
-		switch (mode)
-		{
-		case 0:
-		{
-			for (int i = 0; i < this->field.f_width; i++)
-			{
-				this->field.field[i][0] = char(219);
-				this->field.field[i][field.f_length - 1] = char(219);
-			}
-			for (int i = 0; i < this->field.f_length; i++)
-			{
-				this->field.field[0][i] = char(219);
-				this->field.field[field.f_width - 1][i] = char(219);
-			}
-		}
-		}
 		print_field(this->field, len_code);
 		while (handler(this->field, code, len_code))
 		{
@@ -176,8 +179,18 @@ private:
 		SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), { SHORT(0), SHORT(game.f_width + 1) });
 	}
 
-	int handler(Field& game, string& code, int& len_code)
+	int handler(Field& game, string& input, int& len_code)
 	{
+		istringstream code1{ input };
+		vector<string> result;
+		while (!code1.eof())
+		{
+			string substring;
+			code1 >> substring;
+			result.push_back(substring);
+		}
+		string code = result[0];
+
 		if (code.compare("quit") == 0)
 		{
 			return false;
@@ -214,13 +227,50 @@ private:
 		}
 		if (code.compare("step") == 0)
 		{
-			game.step_field();
+			for (int i = 0; (result.size() > 1) and (i < stoi(result[1])); i++)
+			{
+				game.step_field();
+				if ((result.size() == 3) and result[2] == "v")
+				{
+					print_field(game, len_code);
+				}
+				Sleep(10);
+			}
 			print_field(game, len_code);
-			Sleep(10);
-			code = "pause";
-			len_code = code.size();
+			input = "pause";
+			len_code = input.size();
 		}
+		if (code.compare("load") == 0)
+		{
+			string path = "";
+			this->load(path);
+		}
+		result.clear();
 		return true;
+	}
+
+	void load(string path)
+	{
+		this->field.ReadPath(path);
+	}
+	void load_game(int mode)
+	{
+		switch (mode)
+		{
+		case 0:
+		{
+			for (int i = 0; i < this->field.f_width; i++)
+			{
+				this->field.field[i][0] = char(219);
+				this->field.field[i][field.f_length - 1] = char(219);
+			}
+			for (int i = 0; i < this->field.f_length; i++)
+			{
+				this->field.field[0][i] = char(219);
+				this->field.field[field.f_width - 1][i] = char(219);
+			}
+		}
+		}
 	}
 
 	int Cy = 16;
