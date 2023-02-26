@@ -1,16 +1,7 @@
 #pragma once
-#include <iostream>
 #include <vector>
-#include <cstring>
-#include <string>
-#include <windows.h>
-#include <conio.h>
-#include <fstream>
-#include <sstream>
 #include "Field.h"
 #include "GUI.h"
-
-using namespace std;
 
 class Game_of_Life
 {
@@ -19,7 +10,7 @@ public:
 
 	Game_of_Life();
 
-	Game_of_Life(vector<int> B, vector<int> S);
+	Game_of_Life(std::vector<char> B, std::vector<char> S);
 
 	~Game_of_Life();
 
@@ -33,18 +24,21 @@ private:
 
 	int check_neighbours(int i, int j);
 
-	void load(string path);
-
 	void load_game(int mode);
 
-	bool mfind(vector<int> v, int key);
+	bool mfind(std::vector<char> v, int key);
 
 	void step_field();
 
-	int handler(string& input, int& len_code);
+	int handler(std::string& input, int& len_code);
 
-	vector<int> RB;
-	vector<int> RS;
+	Game_of_Life ReadPath(std::string path);
+
+	void DumpGame(std::string path, std::string name);
+
+	std::vector<char> RB;
+	std::vector<char> RS;
+	std::vector<char> name;
 
 	int Cy = 16;
 	int Cx = 12;

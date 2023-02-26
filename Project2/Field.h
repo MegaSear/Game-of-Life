@@ -1,14 +1,5 @@
 #pragma once
-#include <iostream>
 #include <vector>
-#include <cstring>
-#include <string>
-#include <windows.h>
-#include <conio.h>
-#include <fstream>
-#include <sstream>
-
-using namespace std;
 
 class Field
 {
@@ -20,7 +11,7 @@ public:
 
 	~Field();
 
-	vector<vector<char>> data;
+	std::vector<std::vector<char>> data;
 	int f_length, f_width;
 	char alive = (char)219;
 	char dead = ' ';
