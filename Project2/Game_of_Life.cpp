@@ -42,31 +42,11 @@ int Game_of_Life::check_neighbours(int i, int j)
 		{
 			if (dy == 0 and dx == 0)
 				continue;
-			if (this->field.data[((i + dy + this->field.f_width) % this->field.f_width)][((j + dx + this->field.f_length) % this->field.f_length)] == alive)
+			if (this->field.GetCellData(((i + dy + this->field.GetWidth()) % this->field.GetWidth()), ((j + dx + this->field.GetLength()) % this->field.GetLength())) == field.alive)
 				N++;
 		}
 	}
 	return N;
-}
-
-void Game_of_Life::load_game(int mode)
-{
-	switch (mode)
-	{
-	case 0:
-	{
-		for (int i = 0; i < this->field.f_width; i++)
-		{
-			this->field.data[i][0] = alive;
-			this->field.data[i][field.f_length - 1] = alive;
-		}
-		for (int i = 0; i < this->field.f_length; i++)
-		{
-			this->field.data[0][i] = alive;
-			this->field.data[field.f_width - 1][i] = alive;
-		}
-	}
-	}
 }
 
 bool Game_of_Life::mfind(std::vector<char> v, int key)
@@ -83,25 +63,27 @@ bool Game_of_Life::mfind(std::vector<char> v, int key)
 	return result;
 }
 
-void Game_of_Life::step_field()
+bool Game_of_Life::step_field()
 {
 	Field field_new(this->field);
 
-	for (int i = 0; i < field_new.f_width; i++)
+	for (int i = 0; i < field_new.GetWidth(); i++)
 	{
-		for (int j = 0; j < field_new.f_length; j++)
+		for (int j = 0; j < field_new.GetLength(); j++)
 		{
 			if (
-				(mfind(RS, check_neighbours(i, j)) and field.data[i][j] == alive)
+				(mfind(RS, check_neighbours(i, j)) and field.GetCellData(i, j) == field.alive)
 				or
-				(mfind(RB, check_neighbours(i, j)) and field.data[i][j] == dead)
+				(mfind(RB, check_neighbours(i, j)) and field.GetCellData(i, j) == field.dead)
 				)
-				field_new.data[i][j] = alive;
+				field_new.SetCellData(i, j, field.alive);
 			else
-				field_new.data[i][j] = dead;
+				field_new.SetCellData(i, j, field.dead);
 		}
 	}
+	bool sign = this->field == field_new;
 	this->field = field_new;
+	return sign;
 };
 
 int Game_of_Life::handler(std::string& input, int& len_code)
@@ -116,6 +98,19 @@ int Game_of_Life::handler(std::string& input, int& len_code)
 	}
 	std::string code = result[0];
 
+	if (code.compare("clear") == 0)
+	{
+		for (int x = 0; x < field.GetWidth(); x++)
+		{
+			for (int y = 0; y < field.GetLength(); y++)
+			{
+				field.SetCellData(x, y, field.dead);
+			}
+		}
+		gui.print_field(field, len_code);
+		input = "pause";
+		len_code = input.size();
+	}
 	if (code.compare("quit") == 0)
 	{
 		return false;
@@ -136,30 +131,34 @@ int Game_of_Life::handler(std::string& input, int& len_code)
 		int j = p.x * 1920 / 1535 / Cx;
 		if (GetAsyncKeyState(VK_RBUTTON))
 		{
-			if (not(field.f_width > i and i >= 0 and field.f_length > j and j >= 0))
+			if (not(field.GetWidth() > i and i >= 0 and field.GetLength() > j and j >= 0))
 				return true;
 
-			field.data[i][j] = alive;
+			field.SetCellData(i, j, field.alive);
 
 			if (GetAsyncKeyState(VK_LCONTROL))
 			{
-				field.data[i][j] = dead;
+				field.SetCellData(i, j, field.dead);
 			}
 			SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), { SHORT(j), SHORT(i) });
-			std::cout << field.data[i][j];
-			SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), { SHORT(0), SHORT(field.f_width + 1) });
+			std::cout << field.GetCellData(i, j);
+			SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), { SHORT(0), SHORT(field.GetWidth() + 1) });
 		}
 	}
 	if (code.compare("step") == 0)
 	{
 		for (int i = 0; (result.size() > 1) and (i < stoi(result[1])); i++)
 		{
-			step_field();
+			std::cout << "Please wait... " << i * 100 / stoi(result[1]) << "%";
+			int len = 30;
+			bool sgn = step_field();
 			if ((result.size() == 3) and result[2] == "v")
 			{
 				gui.print_field(field, len_code);
 			}
-			Sleep(10);
+			gui.clear_command(this->field, len);
+			if (sgn)
+				break;
 		}
 		gui.print_field(field, len_code);
 		input = "pause";
@@ -169,6 +168,7 @@ int Game_of_Life::handler(std::string& input, int& len_code)
 	{
 		input = "pause";
 		DumpGame(result[1], result[2]);
+		len_code = input.size();
 	}
 	if (code.compare("load") == 0)
 	{
@@ -177,6 +177,7 @@ int Game_of_Life::handler(std::string& input, int& len_code)
 		*this = new_game;
 		this->start();
 		input = "pause";
+		len_code = input.size();
 	}
 	result.clear();
 	return true;
@@ -263,7 +264,7 @@ Game_of_Life Game_of_Life::ReadPath(std::string path)
 			}
 			if (Rules and Comment and Init)
 			{
-				game.field.data[stoi(result[0])][stoi(result[1])] = alive;
+				game.field.SetCellData(stoi(result[0]), stoi(result[1]), field.alive);
 				continue;
 			}
 			else
@@ -291,16 +292,16 @@ void Game_of_Life::DumpGame(std::string path, std::string name)
 	for (auto rule : this->RS)
 		out << char(rule + '0');
 	out << "\n";
-	out << "#S " << this->field.f_length << " " << this->field.f_width << std::endl;
+	out << "#S " << this->field.GetLength() << " " << this->field.GetWidth() << std::endl;
 
-	for (int y = 0; y < this->field.f_length; ++y)
+	for (int y = 0; y < this->field.GetLength(); ++y)
 	{
-		std::cout << "Please wait... " << y * 100 / this->field.f_length << "%";
+		std::cout << "Please wait... " << y * 100 / this->field.GetLength() << "%";
 		int len = 30;
 		gui.clear_command(this->field, len);
-		for (int x = 0; x < this->field.f_width; ++x)
+		for (int x = 0; x < this->field.GetWidth(); ++x)
 		{
-			if (this->field.data[x][y] == alive)
+			if (this->field.GetCellData(x, y) == field.alive)
 			{
 				out << x << " " << y << "\n";
 			}
